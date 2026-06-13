@@ -1,3 +1,13 @@
+---
+title: ProxyForge
+emoji: 🛡️
+colorFrom: cyan
+colorTo: blue
+sdk: docker
+pinned: false
+app_port: 7860
+---
+
 # 🛡️ ProxyForge: Enterprise-Grade Proxy Infrastructure
 
 ProxyForge is a high-performance, privacy-focused proxy management and validation platform. It allows users to build, manage, and scale a globally distributed proxy network with real-time monitoring and automated edge provisioning.
@@ -114,4 +124,3 @@ ProxyForge uses a highly optimized Docker build pipeline:
 *   **Zero-Log Policy:** Edge nodes do not store transit metadata.
 *   **SSH Hardening:** Provisioning wizard enforces best practices on remote VPS nodes.
 *   **JWT Auth:** Stateless authentication for all API Engine requests.
-
