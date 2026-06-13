@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxyforge-backend
+  labels:
+    app: proxyforge-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: proxyforge-backend
+  template:
+    metadata:
+      labels:
+        app: proxyforge-backend
+    spec:
+      containers:
+      - name: proxyforge-backend
+        image: proxyforge-backend:latest
+        ports:
+        - containerPort: 8000
+        envFrom:
+        - secretRef:
+            name: proxyforge-secrets
+        - configMapRef:
+            name: proxyforge-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: proxyforge-frontend
+  labels:
+    app: proxyforge-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: proxyforge-frontend
+  template:
+    metadata:
+      labels:
+        app: proxyforge-frontend
+    spec:
+      containers:
+      - name: proxyforge-frontend
+        image: proxyforge-frontend:latest
+        ports:
+        - containerPort: 3000
+        envFrom:
+        - configMapRef:
+            name: proxyforge-frontend-config

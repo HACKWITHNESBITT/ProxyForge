@@ -1,0 +1,76 @@
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: proxyforge-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password123
+      POSTGRES_DB: proxyforge
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - proxyforge-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: proxyforge-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - proxyforge-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: proxyforge-backend
+    environment:
+      - NODE_ENV=development
+      - PORT=8000
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=postgres
+      - DB_PASSWORD=password123
+      - DB_NAME=proxyforge
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - JWT_SECRET=supersecretjwtkey_proxyforge
+    ports:
+      - "8000:8000"
+      - "8888:8888"
+    depends_on:
+      - db
+      - redis
+    networks:
+      - proxyforge-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: proxyforge-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://192.168.1.197:8000
+    depends_on:
+      - backend
+    networks:
+      - proxyforge-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  proxyforge-network:
+    driver: bridge
