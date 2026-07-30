@@ -1,44 +1,34 @@
----
-title: ProxyForge
-emoji: 🛡️
-colorFrom: blue
-colorTo: indigo
-sdk: docker
-pinned: false
-app_port: 7860
----
-
-# 🛡️ ProxyForge: Enterprise-Grade Proxy Infrastructure
+#  ProxyForge: Enterprise-Grade Proxy Infrastructure
 
 ProxyForge is a high-performance, privacy-focused proxy management and validation platform. It allows users to build, manage, and scale a globally distributed proxy network with real-time monitoring and automated edge provisioning.
 
 ---
 
-## 🌟 Key Features
+##  Key Features
 
-### 1. 🔍 High-Speed Proxy Validator
+### 1.  High-Speed Proxy Validator
 *   **Bulk Validation:** Check thousands of HTTP, HTTPS, and SOCKS5 proxies in seconds.
 *   **Deep Intelligence:** Detect latency (ms), country/location, and anonymity levels (Elite, Anonymous, Transparent).
 *   **Real-time Streaming:** Powered by WebSockets to show live validation progress.
 
-### 2. ⚙️ Managed API Engine
+### 2.  Managed API Engine
 *   **Single Entry Point:** Rotate thousands of proxies through a single Gateway endpoint.
 *   **API Key Management:** Scalable authentication for production environments.
 *   **Quick Integration:** Built-in code generators for cURL, Node.js, and Python.
 
-### 3. 🌐 Global Network Monitoring
+### 3.  Global Network Monitoring
 *   **Real-time Mesh Visualizer:** Interactive dashboard showing global traffic and node health.
 *   **Throughput Tracking:** Monitor GB/s throughput and active tunnel counts across your mesh.
 *   **Edge Node Status:** Detailed metrics for every region (NA, EU, AS, UK).
 
-### 4. 🚀 Automated Node Provisioning
+### 4.  Automated Node Provisioning
 *   **One-Click Deployment:** Turn any clean Ubuntu/Debian VPS into a ProxyForge edge node.
 *   **SSH Integration:** Automated OS hardening, TCP stack optimization, and engine installation.
 *   **Encrypted Tunneling:** Built-in support for secure WireGuard tunnels.
 
 ---
 
-## 🛠 Tech Stack
+##  Tech Stack
 
 | Layer | Technology |
 | :--- | :--- |
@@ -49,7 +39,7 @@ ProxyForge is a high-performance, privacy-focused proxy management and validatio
 
 ---
 
-## 🌐 Real Proxy Gateway (New!)
+##  Real Proxy Gateway (New!)
 
 ProxyForge now includes a **Rotating Proxy Gateway**. Instead of manually configuring individual free proxies (which often die), you can connect your devices to a single stable endpoint that automatically rotates through working proxies.
 
@@ -58,7 +48,7 @@ ProxyForge now includes a **Rotating Proxy Gateway**. Instead of manually config
 *   **Port:** `8888`
 *   **Protocol:** HTTP
 
-### 📱 Mobile Setup
+###  Mobile Setup
 
 #### **Android / iOS**
 1.  Go to **Wi-Fi Settings** on your device.
@@ -69,7 +59,7 @@ ProxyForge now includes a **Rotating Proxy Gateway**. Instead of manually config
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### Prerequisites
 *   [Docker](https://docs.docker.com/get-docker/)
@@ -94,7 +84,7 @@ ProxyForge now includes a **Rotating Proxy Gateway**. Instead of manually config
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 ```text
 ProxyForge/
@@ -110,7 +100,7 @@ ProxyForge/
 
 ---
 
-## 🔧 Optimized Build System
+##  Optimized Build System
 
 ProxyForge uses a highly optimized Docker build pipeline:
 *   **Layer Caching:** Dependencies are cached separately from source code.
@@ -119,7 +109,7 @@ ProxyForge uses a highly optimized Docker build pipeline:
 
 ---
 
-## 🔒 Security
+##  Security
 
 *   **Zero-Log Policy:** Edge nodes do not store transit metadata.
 *   **SSH Hardening:** Provisioning wizard enforces best practices on remote VPS nodes.
