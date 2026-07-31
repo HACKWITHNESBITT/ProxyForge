@@ -3,6 +3,8 @@ import httpProxy from 'http-proxy';
 import { HttpProxyAgent } from 'http-proxy-agent';
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import { residentialMesh } from './residentialMesh.js';
+import { ipv6Generator } from './ipv6Generator.js';
+import net from 'net';
 
 let workingProxies: any[] = [];
 let currentIndex = 0;
@@ -47,9 +49,18 @@ const server = http.createServer(async (req, res) => {
     }
   }
 
+  // If no upstream proxies available, generate our own IPv6 proxy (Real Proxy Generation)
   if (workingProxies.length === 0) {
-    res.statusCode = 502;
-    res.end('No working proxies available in ProxyForge Gateway');
+    const outboundIp = ipv6Generator.generateRandomIP();
+    console.log(`🚀 Routing HTTP request directly via generated IPv6: ${outboundIp}`);
+    
+    proxy.web(req, res, {
+      target: req.url,
+      localAddress: outboundIp,
+      changeOrigin: true,
+      toProxy: true,
+      ignorePath: true,
+    });
     return;
   }
 
@@ -73,11 +84,38 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
+// Handle HTTPS CONNECT method for true proxy functionality
+server.on('connect', (req, clientSocket, head) => {
+  const [hostname, portStr] = (req.url || '').split(':');
+  const port = Number(portStr) || 443;
+  const outboundIp = ipv6Generator.generateRandomIP();
+  
+  console.log(`🚀 Routing HTTPS (CONNECT) to ${hostname}:${port} via generated IPv6: ${outboundIp}`);
+  
+  const serverSocket = net.connect(port, hostname, { localAddress: outboundIp }, () => {
+    clientSocket.write('HTTP/1.1 200 Connection Established\r\n' +
+                       'Proxy-agent: ProxyForge\r\n' +
+                       '\r\n');
+    serverSocket.write(head);
+    serverSocket.pipe(clientSocket);
+    clientSocket.pipe(serverSocket);
+  });
+  
+  serverSocket.on('error', (err: any) => {
+    console.error(`Socket error on IPv6 ${outboundIp}:`, err.message);
+    clientSocket.end();
+  });
+  
+  clientSocket.on('error', (err: any) => {
+    serverSocket.end();
+  });
+});
+
 proxy.on('error', (err, req, res: any) => {
-  if (!res.headersSent) {
+  if (res && !res.headersSent) {
     res.writeHead(502, { 'Content-Type': 'text/plain' });
   }
-  res.end('ProxyForge Gateway Error: ' + err.message);
+  if (res) res.end('ProxyForge Gateway Error: ' + err.message);
 });
 
 export function startGateway(port: number = 8888) {
