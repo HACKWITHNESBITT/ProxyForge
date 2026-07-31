@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Shield, Zap, Activity, MapPin, Layers, Plus, Server, Key, Settings, Loader2, CheckCircle2, X, Search, Radar, Crosshair } from 'lucide-react';
 
@@ -19,17 +19,46 @@ export default function NetworkPage() {
   const [deployProgress, setDeployProgress] = useState(0);
   const [trackingIp, setTrackingIp] = useState('');
   const [isLocating, setIsLocating] = useState(false);
+  const [meshStats, setMeshStats] = useState({ totalAgents: 0, online: 0 });
   const [trackedProxies, setTrackedProxies] = useState<any[]>([
     { ip: '1.1.1.1', lat: 37.7749, lng: -122.4194, city: 'San Francisco', country: 'US' },
     { ip: '8.8.8.8', lat: 52.5200, lng: 13.4050, city: 'Berlin', country: 'DE' }
   ]);
 
-  const nodes = [
-    { id: 'PF-NA-01', location: 'New York, US', load: 42, status: 'Healthy', ping: '12ms', lat: 40.7128, lng: -74.0060 },
-    { id: 'PF-EU-04', location: 'Frankfurt, DE', load: 68, status: 'Healthy', ping: '28ms', lat: 50.1109, lng: 8.6821 },
-    { id: 'PF-AS-02', location: 'Singapore, SG', load: 15, status: 'Healthy', ping: '115ms', lat: 1.3521, lng: 103.8198 },
-    { id: 'PF-UK-01', location: 'London, GB', load: 89, status: 'Degraded', ping: '32ms', lat: 51.5074, lng: -0.1278 },
-  ];
+  const nodes = Array.from({ length: meshStats.totalAgents }, (_, index) => {
+    const isOnline = index < meshStats.online;
+
+    return {
+      id: `PF-NODE-${String(index + 1).padStart(2, '0')}`,
+      location: isOnline ? 'Connected via Residential Mesh' : 'Disconnected Agent',
+      load: isOnline ? 35 : 0,
+      status: isOnline ? 'Healthy' : 'Offline',
+      ping: isOnline ? 'Live' : '—',
+      lat: 40.7128,
+      lng: -74.0060,
+    };
+  });
+
+  useEffect(() => {
+    const fetchMeshStats = async () => {
+      try {
+        const res = await fetch('/api/v1/mesh/stats');
+        if (!res.ok) {
+          throw new Error(`Failed to fetch mesh stats: ${res.status}`);
+        }
+
+        const data = await res.json();
+        setMeshStats(data);
+      } catch (error) {
+        console.error('Failed to fetch mesh stats:', error);
+      }
+    };
+
+    fetchMeshStats();
+    const interval = setInterval(fetchMeshStats, 5000);
+
+    return () => clearInterval(interval);
+  }, []);
 
   const handleTrackIp = async () => {
     if (!trackingIp) return;
@@ -113,13 +142,13 @@ export default function NetworkPage() {
           <div className="absolute top-6 left-6 z-30 pointer-events-none">
             <div className="bg-black/60 backdrop-blur-md border border-neutral-800 p-4 rounded-xl">
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+                <div className={`w-2 h-2 rounded-full ${meshStats.online > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
                 <span className="text-[10px] font-bold text-white uppercase tracking-widest">Live Orbital Feed</span>
               </div>
               <div className="space-y-1">
                 <div className="text-[9px] text-neutral-500 font-mono">SENSOR: ACTIVE</div>
                 <div className="text-[9px] text-neutral-500 font-mono">SOURCE: ESRI WORLD IMAGERY</div>
-                <div className="text-[9px] text-cyan-400 font-mono">LATENCY: SYNCED</div>
+                <div className="text-[9px] text-cyan-400 font-mono">AGENTS: {meshStats.online}/{meshStats.totalAgents} ONLINE</div>
               </div>
             </div>
           </div>
@@ -150,6 +179,11 @@ export default function NetworkPage() {
 
         {/* Nodes Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {nodes.length === 0 && (
+            <div className="md:col-span-2 lg:col-span-4 bg-neutral-900 border border-neutral-800 rounded-xl p-6 text-sm text-neutral-400">
+              No mesh nodes have registered yet. Start an agent and it will appear here automatically.
+            </div>
+          )}
           {nodes.map((node, i) => (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -162,7 +196,7 @@ export default function NetworkPage() {
                 <div className="p-2 bg-neutral-800 rounded-lg group-hover:bg-neutral-700 transition-colors">
                   <MapPin className="w-4 h-4 text-cyan-400" />
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${node.status === 'Healthy' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${node.status === 'Healthy' ? 'bg-emerald-500/10 text-emerald-400' : node.status === 'Offline' ? 'bg-red-500/10 text-red-400' : 'bg-amber-500/10 text-amber-400'}`}>
                   {node.status}
                 </span>
               </div>
@@ -179,7 +213,7 @@ export default function NetworkPage() {
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-mono text-neutral-400">
                   <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> {node.ping}</span>
-                  <span className="flex items-center gap-1"><Activity className="w-3 h-3" /> Active</span>
+                  <span className="flex items-center gap-1"><Activity className="w-3 h-3" /> {node.status === 'Offline' ? 'Inactive' : 'Active'}</span>
                 </div>
               </div>
             </motion.div>

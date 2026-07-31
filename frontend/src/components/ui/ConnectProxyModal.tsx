@@ -37,6 +37,19 @@ interface ConnectProxyModalProps {
 type CopiedField = "host" | "port" | "url" | "pac" | null;
 type Tab = "qr" | "manual" | "auto";
 
+type Accent = "emerald" | "cyan";
+
+const accentClasses: Record<Accent, { container: string; icon: string }> = {
+  emerald: {
+    container: "bg-emerald-500/10 border-emerald-500/20",
+    icon: "text-emerald-400",
+  },
+  cyan: {
+    container: "bg-cyan-500/10 border-cyan-500/20",
+    icon: "text-cyan-400",
+  },
+};
+
 export default function ConnectProxyModal({
   proxy,
   isOpen,
@@ -424,24 +437,26 @@ export default function ConnectProxyModal({
                           {
                             name: "Super Proxy",
                             desc: "HTTP/SOCKS5 with VPN routing",
-                            color: "emerald",
+                            color: "emerald" as const,
                           },
                           {
                             name: "Every Proxy",
                             desc: "Simple UI, per-app toggle",
-                            color: "cyan",
+                            color: "cyan" as const,
                           },
-                        ].map((app) => (
+                        ].map((app) => {
+                          const accent = accentClasses[app.color];
+                          return (
                           <div
                             key={app.name}
                             className="flex items-center justify-between p-2.5 bg-neutral-950 border border-neutral-800 rounded-lg"
                           >
                             <div className="flex items-center gap-2.5">
                               <div
-                                className={`w-7 h-7 rounded-lg bg-${app.color}-500/10 border border-${app.color}-500/20 flex items-center justify-center`}
+                                className={`w-7 h-7 rounded-lg border flex items-center justify-center ${accent.container}`}
                               >
                                 <Smartphone
-                                  className={`w-3.5 h-3.5 text-${app.color}-400`}
+                                  className={`w-3.5 h-3.5 ${accent.icon}`}
                                 />
                               </div>
                               <div>
@@ -455,7 +470,8 @@ export default function ConnectProxyModal({
                             </div>
                             <ExternalLink className="w-3.5 h-3.5 text-neutral-600" />
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </div>
                   </motion.div>

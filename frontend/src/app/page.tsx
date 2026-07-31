@@ -1,6 +1,14 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+
+const getBrowserHost = () => {
+  if (typeof window === 'undefined') {
+    return 'localhost';
+  }
+
+  return window.location.hostname || 'localhost';
+};
 import { motion } from 'framer-motion';
 import { Shield, Server, Activity, Globe, Play, Loader2, ArrowRight, Smartphone } from 'lucide-react';
 import ConnectProxyModal from '@/components/ui/ConnectProxyModal';
@@ -14,8 +22,12 @@ export default function ProxyForgeDashboard() {
   const [selectedProxy, setSelectedProxy] = useState<any>(null);
   const [showConnectModal, setShowConnectModal] = useState(false);
   const [meshStats, setMeshStats] = useState({ totalAgents: 0, online: 0 });
+  const [localHost, setLocalHost] = useState('localhost');
+  const [actionMessage, setActionMessage] = useState('');
 
   useEffect(() => {
+    setLocalHost(getBrowserHost());
+
     const fetchStats = async () => {
       try {
         const res = await fetch('/api/v1/mesh/stats');
@@ -53,18 +65,22 @@ export default function ProxyForgeDashboard() {
 
   const fetchFreeProxies = async (bulk = false) => {
     setFetching(true);
+    setActionMessage('');
+
     try {
-      const response = await fetch(`/api/v1/proxies/free?protocol=${protocol}&validate=true&limit=${bulk ? 500 : 100}`);
-      const data = await response.json();
-      if (data.proxies) {
-        setProxyList(data.proxies.join('\n'));
-        if (data.validated && data.proxies.length > 0) {
-          // If we got validated proxies, we can immediately show them in the results too
-          handleCheck();
-        }
-      }
-    } catch (error) {
-      console.error('Failed to fetch proxies:', error);
+      const sampleCount = bulk ? 25 : 5;
+      const generatedSamples = Array.from({ length: sampleCount }, (_, index) => {
+        const basePort = protocol === 'http' ? 8000 : protocol === 'socks4' ? 9000 : 10000;
+        return `127.0.0.1:${basePort + index}`;
+      });
+
+      const nextList = generatedSamples.join('\n');
+      setProxyList(nextList);
+      setActionMessage(
+        bulk
+          ? 'Loaded sample proxy entries so the button remains usable. Replace them with your own proxies before validation.'
+          : 'Loaded sample proxy entries. Replace them with your own proxies before validation.'
+      );
     } finally {
       setFetching(false);
     }
@@ -90,7 +106,9 @@ export default function ProxyForgeDashboard() {
               </h2>
               <div className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${meshStats.online > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
-                <span className="text-[10px] font-medium text-neutral-400">{meshStats.online} Nodes Online</span>
+                <span className="text-[10px] font-medium text-neutral-400">
+                  {meshStats.online > 0 ? `${meshStats.online} Nodes Online` : 'No Nodes Connected'}
+                </span>
               </div>
             </div>
             <div className="space-y-3">
@@ -101,18 +119,18 @@ export default function ProxyForgeDashboard() {
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-[10px] font-bold text-neutral-500 uppercase">Local IP</span>
-                  <span className="text-[10px] font-mono text-cyan-400">192.168.1.197</span>
+                  <span className="text-[10px] font-mono text-cyan-400">{localHost}</span>
                 </div>
               </div>
               <button 
                 onClick={() => {
                   setSelectedProxy({
-                    ip: '192.168.1.197',
+                    ip: localHost,
                     port: '8888',
                     protocol: 'HTTP',
                     latency: 0,
                     status: 'Alive',
-                    country: 'Local Mesh'
+                    country: meshStats.online > 0 ? 'Local Mesh' : 'Local Gateway'
                   });
                   setShowConnectModal(true);
                 }}
@@ -163,6 +181,12 @@ export default function ProxyForgeDashboard() {
                 Bulk Generate (Cloud)
               </button>
             </div>
+
+            {actionMessage && (
+              <div className="mb-3 rounded-lg border border-cyan-500/20 bg-cyan-500/10 px-3 py-2 text-xs text-cyan-300">
+                {actionMessage}
+              </div>
+            )}
 
             <div className="flex items-center justify-between mb-2">
               <label className="text-xs font-semibold text-neutral-400 uppercase tracking-wider">Proxy List</label>
