@@ -15,7 +15,8 @@ import ConnectProxyModal from '@/components/ui/ConnectProxyModal';
 
 export default function ProxyForgeDashboard() {
   const [checking, setChecking] = useState(false);
-  const [fetching, setFetching] = useState(false);
+  const [fetchingFree, setFetchingFree] = useState(false);
+  const [fetchingCloud, setFetchingCloud] = useState(false);
   const [proxies, setProxies] = useState<any[]>([]);
   const [proxyList, setProxyList] = useState('');
   const [protocol, setProtocol] = useState('http');
@@ -64,25 +65,85 @@ export default function ProxyForgeDashboard() {
   };
 
   const fetchFreeProxies = async (bulk = false) => {
-    setFetching(true);
+    setFetchingFree(true);
     setActionMessage('');
 
     try {
-      const sampleCount = bulk ? 25 : 5;
-      const generatedSamples = Array.from({ length: sampleCount }, (_, index) => {
-        const basePort = protocol === 'http' ? 8000 : protocol === 'socks4' ? 9000 : 10000;
-        return `127.0.0.1:${basePort + index}`;
+      const response = await fetch(`/api/v1/proxies/free?protocol=${protocol}&limit=${bulk ? 200 : 20}&validate=true`);
+      const data = await response.json();
+
+      if (data.proxies && data.proxies.length > 0) {
+        setProxyList(data.proxies.join('\n'));
+        setActionMessage(
+          bulk
+            ? `Loaded ${data.proxies.length} real proxies from ${data.source}. Replace with your own before validation.`
+            : `Loaded ${data.proxies.length} real proxies from ${data.source}. Replace with your own before validation.`
+        );
+      } else {
+        setActionMessage('No proxies found. Try again or use Bulk Generate (Cloud) to provision new nodes.');
+      }
+    } catch (error) {
+      console.error('Failed to fetch proxies:', error);
+      setActionMessage('Failed to fetch proxies. Check the backend connection.');
+    } finally {
+      setFetchingFree(false);
+    }
+  };
+
+  const getUserIp = async (): Promise<string | null> => {
+    try {
+      const res = await fetch('https://api.ipify.org?format=json');
+      const data = await res.json();
+      return data.ip || null;
+    } catch {
+      return null;
+    }
+  };
+
+  const handleCloudGenerate = async () => {
+    setFetchingCloud(true);
+    setActionMessage('Provisioning cloud proxy node...');
+
+    try {
+      const userIp = await getUserIp();
+
+      const response = await fetch('/api/v1/proxies/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          protocol,
+          count: 1,
+          validate: true,
+          source: 'cloud',
+          region: 'nyc1',
+          ip: userIp || undefined,
+        }),
       });
 
-      const nextList = generatedSamples.join('\n');
-      setProxyList(nextList);
-      setActionMessage(
-        bulk
-          ? 'Loaded sample proxy entries so the button remains usable. Replace them with your own proxies before validation.'
-          : 'Loaded sample proxy entries. Replace them with your own proxies before validation.'
-      );
+      const data = await response.json();
+
+      if (data.proxies && data.proxies.length > 0) {
+        const proxyLines = data.proxies
+          .map((p: any) => `${p.ip}:${p.port}`)
+          .join('\n');
+        setProxyList(proxyLines);
+        setActionMessage(
+          `Cloud proxy ready! Using ${data.source || 'your IP'}. ${data.proxies.length} proxies loaded.`
+        );
+      } else if (data.result?.success) {
+        setActionMessage(
+          `Cloud node provisioned! IP: ${data.result.ip}:${data.result.port}.`
+        );
+      } else {
+        setActionMessage(
+          `Cloud provisioning: ${data.result?.message || 'Unknown error'}. No proxies available.`
+        );
+      }
+    } catch (error) {
+      console.error('Cloud generation failed:', error);
+      setActionMessage('Cloud provisioning failed. Try Get Free Proxies instead.');
     } finally {
-      setFetching(false);
+      setFetchingCloud(false);
     }
   };
 
@@ -164,22 +225,22 @@ export default function ProxyForgeDashboard() {
                   </button>
                 ))}
               </div>
-              <button 
-                onClick={() => fetchFreeProxies(false)}
-                disabled={fetching}
-                className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 bg-cyan-400/10 px-2 py-1 rounded-md border border-cyan-400/20"
-              >
-                {fetching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3" />}
-                Get Free Proxies
-              </button>
-              <button 
-                onClick={() => fetchFreeProxies(true)}
-                disabled={fetching}
-                className="text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 bg-amber-400/10 px-2 py-1 rounded-md border border-amber-400/20"
-              >
-                {fetching ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                Bulk Generate (Cloud)
-              </button>
+                <button 
+                  onClick={() => fetchFreeProxies(false)}
+                  disabled={fetchingFree}
+                  className="text-[10px] font-bold text-cyan-400 hover:text-cyan-300 transition-colors flex items-center gap-1 bg-cyan-400/10 px-2 py-1 rounded-md border border-cyan-400/20"
+                >
+                  {fetchingFree ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3" />}
+                  Get Free Proxies
+                </button>
+                <button 
+                  onClick={() => handleCloudGenerate()}
+                  disabled={fetchingCloud}
+                  className="text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 bg-amber-400/10 px-2 py-1 rounded-md border border-amber-400/20"
+                >
+                  {fetchingCloud ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
+                  Bulk Generate (Cloud)
+                </button>
             </div>
 
             {actionMessage && (

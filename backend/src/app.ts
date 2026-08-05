@@ -20,6 +20,7 @@ app.get('/api/health', (req: Request, res: Response) => {
 import proxyProviderRouter from './routes/proxyProvider.js';
 import proxyConnectRouter from './routes/proxyConnect.js';
 import proxyValidatorRouter from './routes/proxyValidator.js';
+import proxyGenerateRouter from './routes/proxyGenerate.js';
 import { residentialMesh } from './services/residentialMesh.js';
 
 // Routes placeholders
@@ -28,6 +29,7 @@ app.get('/api/v1/mesh/stats', (req, res) => {
   res.json(residentialMesh.getStats());
 });
 app.use('/api/v1/proxies', proxyProviderRouter);
+app.use('/api/v1/proxies/generate', proxyGenerateRouter);
 app.use('/api/v1/proxy', proxyConnectRouter);
 app.use('/api/v1/validate', proxyValidatorRouter);
 
