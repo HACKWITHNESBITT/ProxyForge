@@ -27,7 +27,7 @@ export async function validateProxy(ip: string, port: string, protocol: string):
     const response = await axios.get('http://ip-api.com/json', {
       httpAgent: agent,
       httpsAgent: agent,
-      timeout: 5000,
+      timeout: 3000,
     });
 
     const latency = Date.now() - start;
@@ -39,7 +39,7 @@ export async function validateProxy(ip: string, port: string, protocol: string):
       latency,
       status: 'Alive',
       country: response.data.countryCode || 'Unknown',
-      anonymity: 'Elite', // Simplification for now
+      anonymity: 'Elite',
     };
   } catch (error) {
     return {

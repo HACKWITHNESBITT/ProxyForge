@@ -1,6 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { generateProxies, fetchProxiesFromSources, provisionCloudProxyNode, getStoredProxies } from '../services/proxyGeneration.js';
-import { validateProxy } from '../services/proxyValidator.js';
+import { generateProxies, provisionCloudProxyNode, getStoredProxies } from '../services/proxyGeneration.js';
 
 const router = Router();
 
@@ -32,20 +31,17 @@ router.post('/', async (req: Request, res: Response) => {
         });
       }
 
-      const freeProxies = await fetchProxiesFromSources(protocol.toLowerCase(), 20);
-      for (const proxyStr of freeProxies) {
-        const [proxyIp, proxyPort] = proxyStr.split(':');
-        if (proxyIp && proxyPort) {
-          proxies.push({
-            ip: proxyIp,
-            port: proxyPort,
-            protocol: protocol.toUpperCase(),
-            latency: 0,
-            country: 'Free Proxy',
-            status: 'Alive',
-            source: 'Free Proxy Fetch',
-          });
-        }
+      const storedFreeProxies = await getStoredProxies(protocol.toLowerCase(), 20);
+      for (const p of storedFreeProxies) {
+        proxies.push({
+          ip: p.ip,
+          port: p.port,
+          protocol: p.protocol,
+          latency: p.latency,
+          country: p.country || 'Cached',
+          status: p.status,
+          source: p.source,
+        });
       }
 
       return res.status(200).json({
@@ -89,34 +85,15 @@ router.get('/free', async (req: Request, res: Response) => {
   }
 
   try {
-    const rawProxies = await fetchProxiesFromSources(protocol.toLowerCase(), limit * 3);
-    const shuffled = rawProxies.sort(() => 0.5 - Math.random()).slice(0, limit);
-
-    if (shouldValidate) {
-      const validationResults = await Promise.all(
-        shuffled.map(async (proxyStr) => {
-          const [ip, port] = proxyStr.split(':');
-          if (!ip || !port) return null;
-          return validateProxy(ip, port, protocol);
-        })
-      );
-
-      const working = validationResults.filter((p) => p && p.status === 'Alive');
-      return res.status(200).json({
-        protocol,
-        count: working.length,
-        proxies: working.map((p) => `${p?.ip}:${p?.port}`),
-        validated: true,
-        source: 'Aggregated & Validated',
-      });
-    }
+    const storedProxies = await getStoredProxies(protocol.toLowerCase(), limit);
+    const shuffled = storedProxies.sort(() => 0.5 - Math.random()).slice(0, limit);
 
     res.status(200).json({
       protocol,
       count: shuffled.length,
-      proxies: shuffled,
-      validated: false,
-      source: 'Aggregated',
+      proxies: shuffled.map((p) => `${p.ip}:${p.port}`),
+      validated: true,
+      source: 'Cached Validated',
     });
   } catch (error: any) {
     console.error('Error fetching free proxies:', error.message);

@@ -36,8 +36,9 @@ export interface GeneratedProxy {
 
 export async function fetchProxiesFromSources(
   protocol: string,
-  limit: number = 200
-): Promise<string[]> {
+  limit: number = 200,
+  validate: boolean = true
+): Promise<GeneratedProxy[]> {
   if (!SOURCES[protocol]) {
     throw new Error(`Invalid protocol: ${protocol}. Supported: http, socks4, socks5`);
   }
@@ -45,7 +46,7 @@ export async function fetchProxiesFromSources(
   const fetchPromises = SOURCES[protocol].map(async (url) => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 15000);
+      const timeoutId = setTimeout(() => controller.abort(), 2000);
       const response = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (response.ok) return await response.text();
@@ -61,18 +62,7 @@ export async function fetchProxiesFromSources(
     new Set(combinedText.split(/\r?\n/).filter((line) => line.trim() !== ''))
   );
 
-  return allProxies.slice(0, limit);
-}
-
-export async function generateProxies(
-  protocol: string,
-  count: number = 50,
-  validate: boolean = true
-): Promise<GeneratedProxy[]> {
-  const rawProxies = await fetchProxiesFromSources(protocol, count * 3);
-
-  const shuffled = rawProxies.sort(() => 0.5 - Math.random());
-  const candidates = shuffled.slice(0, count);
+  const candidates = allProxies.slice(0, limit);
 
   if (!validate) {
     return candidates.map((proxyStr) => {
@@ -88,31 +78,66 @@ export async function generateProxies(
     });
   }
 
-  const validationResults = await Promise.all(
-    candidates.map(async (proxyStr) => {
-      const [ip, port] = proxyStr.split(':');
-      if (!ip || !port) return null;
-      const result = await validateProxy(ip, port, protocol);
-      return {
-        ip: result.ip,
-        port: result.port,
-        protocol: result.protocol,
-        status: result.status,
-        latency: result.latency,
-        country: result.country || undefined,
-        anonymity: result.anonymity || undefined,
-        source: 'Validated Fetch',
-      } as GeneratedProxy;
-    })
-  );
+  const batchSize = 5;
+  const validProxies: GeneratedProxy[] = [];
 
-  const validProxies = validationResults.filter(
-    (p): p is GeneratedProxy => p !== null && p.status === 'Alive'
-  );
+  for (let i = 0; i < candidates.length; i += batchSize) {
+    const batch = candidates.slice(i, i + batchSize);
+    const validationResults = await Promise.all(
+      batch.map(async (proxyStr) => {
+        const [ip, port] = proxyStr.split(':');
+        if (!ip || !port) return null;
+        const result = await validateProxy(ip, port, protocol);
+        return {
+          ip: result.ip,
+          port: result.port,
+          protocol: result.protocol,
+          status: result.status,
+          latency: result.latency,
+          country: result.country || undefined,
+          anonymity: result.anonymity || undefined,
+          source: 'Validated Fetch',
+        } as GeneratedProxy;
+      })
+    );
+
+    const batchValid = validationResults.filter(
+      (p): p is GeneratedProxy => p !== null && p.status === 'Alive'
+    );
+    validProxies.push(...batchValid);
+
+    if (validProxies.length >= limit) break;
+  }
 
   await storeProxies(validProxies);
 
-  return validProxies;
+  return validProxies.slice(0, limit);
+}
+
+export async function generateProxies(
+  protocol: string,
+  count: number = 50,
+  validate: boolean = true
+): Promise<GeneratedProxy[]> {
+  const rawProxies = await fetchProxiesFromSources(protocol, count, validate);
+
+  const shuffled = rawProxies.sort(() => 0.5 - Math.random());
+  const candidates = shuffled.slice(0, count);
+
+  if (!validate) {
+    return candidates.map((p) => ({
+      ip: p.ip,
+      port: p.port,
+      protocol: p.protocol,
+      status: 'Alive' as const,
+      latency: 0,
+      source: 'Unvalidated Fetch',
+    }));
+  }
+
+  await storeProxies(candidates);
+
+  return candidates;
 }
 
 async function ensureProxiesTable(): Promise<void> {
