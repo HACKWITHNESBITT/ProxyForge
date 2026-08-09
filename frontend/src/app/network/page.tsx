@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Globe, Shield, Zap, Activity, MapPin, Layers, Plus, Server, Key, Settings, Loader2, CheckCircle2, X, Search, Radar, Crosshair } from 'lucide-react';
+import SpotlightCard from '@/components/ui/SpotlightCard';
 
 import dynamic from 'next/dynamic';
 
@@ -190,8 +191,8 @@ export default function NetworkPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               key={i}
-              className="bg-neutral-900 border border-neutral-800 rounded-xl p-5 hover:border-neutral-700 transition-colors group"
             >
+              <SpotlightCard className="p-5 h-full hover:border-neutral-700 transition-colors group">
               <div className="flex items-center justify-between mb-4">
                 <div className="p-2 bg-neutral-800 rounded-lg group-hover:bg-neutral-700 transition-colors">
                   <MapPin className="w-4 h-4 text-cyan-400" />
@@ -209,13 +210,14 @@ export default function NetworkPage() {
                   <span className={node.load > 80 ? 'text-amber-400' : 'text-neutral-300'}>{node.load}%</span>
                 </div>
                 <div className="w-full h-1 bg-neutral-800 rounded-full overflow-hidden">
-                  <div className={`h-full transition-all duration-1000 ${node.load > 80 ? 'bg-amber-500' : 'bg-cyan-500'}`} style={{ width: `${node.load}%` }}></div>
+                  <div className={`h-full transition-all duration-1000 ${node.load > 80 ? 'bg-gradient-to-r from-amber-500 to-red-500' : 'bg-gradient-to-r from-cyan-600 to-cyan-400'}`} style={{ width: `${node.load}%` }}></div>
                 </div>
                 <div className="flex justify-between items-center text-[10px] font-mono text-neutral-400">
                   <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> {node.ping}</span>
                   <span className="flex items-center gap-1"><Activity className="w-3 h-3" /> {node.status === 'Offline' ? 'Inactive' : 'Active'}</span>
                 </div>
               </div>
+              </SpotlightCard>
             </motion.div>
           ))}
         </div>

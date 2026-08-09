@@ -12,6 +12,7 @@ const getBrowserHost = () => {
 import { motion } from 'framer-motion';
 import { Shield, Server, Activity, Globe, Play, Loader2, ArrowRight, Smartphone } from 'lucide-react';
 import ConnectProxyModal from '@/components/ui/ConnectProxyModal';
+import SpotlightCard from '@/components/ui/SpotlightCard';
 
 export default function ProxyForgeDashboard() {
   const [checking, setChecking] = useState(false);
@@ -152,14 +153,18 @@ export default function ProxyForgeDashboard() {
       
       {/* Background Grid */}
       <div className="fixed inset-0 z-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]">
-        <div className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-cyan-500 opacity-20 blur-[100px]"></div>
+        <motion.div 
+          animate={{ scale: [1, 1.05, 1], opacity: [0.15, 0.25, 0.15] }} 
+          transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }} 
+          className="absolute left-0 right-0 top-0 -z-10 m-auto h-[310px] w-[310px] rounded-full bg-cyan-500 blur-[100px]"
+        />
       </div>
 
 
       {/* Main Content */}
       <main className="relative z-10 max-w-7xl mx-auto px-6 py-12 grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 shadow-xl">
+          <SpotlightCard className="p-4 shadow-xl">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-sm font-bold text-white flex items-center gap-2">
                 <Shield className="w-4 h-4 text-cyan-400" />
@@ -201,18 +206,18 @@ export default function ProxyForgeDashboard() {
                 Connect Phone to Mesh
               </button>
             </div>
-          </div>
+          </SpotlightCard>
           
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 shadow-xl">
+          <SpotlightCard className="p-4 shadow-xl">
             <div className="flex justify-between items-start">
               <div>
                 <h1 className="text-3xl font-bold tracking-tight text-white mb-2">Proxy Validator</h1>
                 <p className="text-neutral-400 text-sm">Enter proxies to check their health, anonymity, and latency.</p>
               </div>
             </div>
-          </div>
+          </SpotlightCard>
           
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4 shadow-xl">
+          <SpotlightCard className="p-4 shadow-xl">
             <div className="flex items-center justify-between mb-3">
               <div className="flex gap-1 p-1 bg-neutral-950 rounded-lg border border-neutral-800">
                 {['http', 'socks4', 'socks5'].map((p) => (
@@ -273,27 +278,27 @@ export default function ProxyForgeDashboard() {
                 {checking ? 'Checking...' : 'Start Check'}
               </button>
             </div>
-          </div>
+          </SpotlightCard>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
+            <SpotlightCard className="p-4">
               <div className="text-neutral-500 text-xs mb-1">Active Workers</div>
               <div className="text-2xl font-semibold text-white flex items-center gap-2">
                 12 <Activity className="w-4 h-4 text-cyan-500" />
               </div>
-            </div>
-            <div className="bg-neutral-900 border border-neutral-800 rounded-xl p-4">
+            </SpotlightCard>
+            <SpotlightCard className="p-4">
               <div className="text-neutral-500 text-xs mb-1">Proxy Gateway</div>
               <div className="text-sm font-semibold text-emerald-400">
                 {proxies.some(p => p.status === 'Alive') ? 'Running on :8888' : 'Idle (No proxies)'}
               </div>
-            </div>
+            </SpotlightCard>
           </div>
         </div>
 
         {/* Right Column: Results */}
         <div className="lg:col-span-8">
-          <div className="bg-neutral-900 border border-neutral-800 rounded-xl shadow-xl overflow-hidden flex flex-col h-[600px]">
+          <SpotlightCard className="shadow-xl flex flex-col h-[600px] !p-0">
             <div className="p-4 border-b border-neutral-800 flex items-center justify-between bg-neutral-900/50 flex-shrink-0">
               <h2 className="text-sm font-semibold text-white flex items-center gap-2">
                 <Server className="w-4 h-4 text-cyan-400" /> Validation Results
@@ -328,8 +333,9 @@ export default function ProxyForgeDashboard() {
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
+                        whileHover={{ scale: 1.01 }}
                         key={i} 
-                        className="border-b border-neutral-800/50 hover:bg-neutral-800/20 transition-colors"
+                        className="border-b border-neutral-800/50 hover:bg-neutral-800/40 hover:border-l-[3px] hover:border-cyan-500 transition-all cursor-pointer group/row"
                       >
                         <td className="px-4 py-3 font-mono text-neutral-300">{p.ip}:{p.port}</td>
                         <td className="px-4 py-3">
@@ -380,7 +386,7 @@ export default function ProxyForgeDashboard() {
                 Export Working <ArrowRight className="w-3 h-3" />
               </button>
             </div>
-          </div>
+          </SpotlightCard>
         </div>
 
       </main>
