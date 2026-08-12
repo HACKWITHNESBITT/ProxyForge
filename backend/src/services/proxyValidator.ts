@@ -27,7 +27,7 @@ export async function validateProxy(ip: string, port: string, protocol: string):
     const response = await axios.get('http://ip-api.com/json', {
       httpAgent: agent,
       httpsAgent: agent,
-      timeout: 3000,
+      timeout: 1500,
     });
 
     const latency = Date.now() - start;

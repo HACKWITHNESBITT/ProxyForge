@@ -1,7 +1,7 @@
 
 services:
   db:
-    image: postgres:15-alpine
+    image: docker.io/library/postgres:15-alpine
     container_name: proxyforge-db
     environment:
       POSTGRES_USER: postgres
@@ -16,7 +16,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: redis:7-alpine
+    image: docker.io/library/redis:7-alpine
     container_name: proxyforge-redis
     ports:
       - "6379:6379"
@@ -56,11 +56,13 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: http://backend:8000
     container_name: proxyforge-frontend
     ports:
       - "3000:3000"
     environment:
-      - NEXT_PUBLIC_API_URL=http://192.168.1.197:8000
+      - NEXT_PUBLIC_API_URL=http://backend:8000
     depends_on:
       - backend
     networks:

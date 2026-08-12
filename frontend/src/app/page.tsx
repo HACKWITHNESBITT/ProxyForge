@@ -70,7 +70,7 @@ export default function ProxyForgeDashboard() {
     setActionMessage('');
 
     try {
-      const response = await fetch(`/api/v1/proxies/free?protocol=${protocol}&limit=${bulk ? 200 : 20}&validate=true`);
+      const response = await fetch(`/api/v1/proxies/free?protocol=${protocol}&limit=${bulk ? 500 : 500}&validate=true`);
       const data = await response.json();
 
       if (data.proxies && data.proxies.length > 0) {
@@ -103,7 +103,7 @@ export default function ProxyForgeDashboard() {
 
   const handleCloudGenerate = async () => {
     setFetchingCloud(true);
-    setActionMessage('Provisioning cloud proxy node...');
+    setActionMessage('Generating and validating 500+ proxies. This may take a moment...');
 
     try {
       const userIp = await getUserIp();
@@ -113,9 +113,9 @@ export default function ProxyForgeDashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           protocol,
-          count: 1,
+          count: 500,
           validate: true,
-          source: 'cloud',
+          source: 'scrape',
           region: 'nyc1',
           ip: userIp || undefined,
         }),
@@ -129,7 +129,7 @@ export default function ProxyForgeDashboard() {
           .join('\n');
         setProxyList(proxyLines);
         setActionMessage(
-          `Cloud proxy ready! Using ${data.source || 'your IP'}. ${data.proxies.length} proxies loaded.`
+          `Bulk generation ready! ${data.proxies.length} real proxies loaded.`
         );
       } else if (data.result?.success) {
         setActionMessage(
@@ -137,12 +137,12 @@ export default function ProxyForgeDashboard() {
         );
       } else {
         setActionMessage(
-          `Cloud provisioning: ${data.result?.message || 'Unknown error'}. No proxies available.`
+          `Bulk generation failed. No proxies available.`
         );
       }
     } catch (error) {
-      console.error('Cloud generation failed:', error);
-      setActionMessage('Cloud provisioning failed. Try Get Free Proxies instead.');
+      console.error('Bulk generation failed:', error);
+      setActionMessage('Bulk generation failed. Try Get Free Proxies instead.');
     } finally {
       setFetchingCloud(false);
     }
@@ -244,7 +244,7 @@ export default function ProxyForgeDashboard() {
                   className="text-[10px] font-bold text-amber-400 hover:text-amber-300 transition-colors flex items-center gap-1 bg-amber-400/10 px-2 py-1 rounded-md border border-amber-400/20"
                 >
                   {fetchingCloud ? <Loader2 className="w-3 h-3 animate-spin" /> : <Play className="w-3 h-3" />}
-                  Bulk Generate (Cloud)
+                  Bulk Generate (500+)
                 </button>
             </div>
 

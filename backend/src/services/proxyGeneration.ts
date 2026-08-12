@@ -46,7 +46,7 @@ export async function fetchProxiesFromSources(
   const fetchPromises = SOURCES[protocol].map(async (url) => {
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 2000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000);
       const response = await fetch(url, { signal: controller.signal });
       clearTimeout(timeoutId);
       if (response.ok) return await response.text();
@@ -62,7 +62,7 @@ export async function fetchProxiesFromSources(
     new Set(combinedText.split(/\r?\n/).filter((line) => line.trim() !== ''))
   );
 
-  const candidates = allProxies.slice(0, limit);
+  const candidates = allProxies.slice(0, validate ? limit * 5 : limit);
 
   if (!validate) {
     return candidates.map((proxyStr) => {
@@ -78,7 +78,7 @@ export async function fetchProxiesFromSources(
     });
   }
 
-  const batchSize = 5;
+  const batchSize = 250;
   const validProxies: GeneratedProxy[] = [];
 
   for (let i = 0; i < candidates.length; i += batchSize) {

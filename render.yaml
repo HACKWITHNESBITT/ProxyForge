@@ -1,0 +1,66 @@
+version: "1"
+
+databases:
+  - name: proxyforge-db
+    databaseName: proxyforge
+    user: proxyforge_user
+    plan: free
+
+services:
+  - type: redis
+    name: proxyforge-redis
+    ipAllowList: [] # internal connections only
+    plan: free
+
+  - type: web
+    name: proxyforge-backend
+    env: docker
+    plan: free
+    dockerContext: ./backend
+    dockerfilePath: ./backend/Dockerfile
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: proxyforge-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: proxyforge-db
+          property: port
+      - key: DB_USER
+        fromDatabase:
+          name: proxyforge-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: proxyforge-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: proxyforge-db
+          property: database
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: proxyforge-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: proxyforge-redis
+          property: port
+      - key: JWT_SECRET
+        generateValue: true
+
+  - type: web
+    name: proxyforge-frontend
+    env: docker
+    plan: free
+    dockerContext: ./frontend
+    dockerfilePath: ./frontend/Dockerfile
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        fromService:
+          type: web
+          name: proxyforge-backend
+          property: url
