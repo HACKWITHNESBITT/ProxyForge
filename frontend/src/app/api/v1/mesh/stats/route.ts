@@ -1,4 +1,4 @@
-const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://backend:8000';
+const backendUrl = process.env.NEXT_PUBLIC_API_HOST ? `https://${process.env.NEXT_PUBLIC_API_HOST}` : 'http://backend:8000';
 
 export async function GET() {
   try {
