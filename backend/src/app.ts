@@ -13,6 +13,9 @@ app.use(helmet());
 app.use(morgan('dev'));
 
 // Basic health check route
+app.get('/', (req: Request, res: Response) => {
+  res.status(200).send('ProxyForge Backend is running');
+});
 app.get('/api/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'ProxyForge API is running', timestamp: new Date().toISOString() });
 });

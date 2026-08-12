@@ -16,6 +16,7 @@ services:
     name: proxyforge-backend
     env: docker
     plan: free
+    healthCheckPath: /api/health
     dockerContext: ./backend
     dockerfilePath: ./backend/Dockerfile
     envVars:
